@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interclasses de Xadrez - Gerenciador Oficial</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>♟️ Interclasses de Xadrez</h1>
+            <small>Sistema Suíço (FIDE) + Mata-Mata Top 4</small>
+        </div>
+        <div class="header-controls">
+            <button class="btn-yellow no-print" onclick="openProjectorMode()" title="Exibir mesas e cronômetro em tela cheia">📺 Modo Telão</button>
+            <div class="status-badge" id="tournamentStatus">📍 Aguardando Início</div>
+            <div class="timer-box">
+                <div>
+                    <div style="font-size: 0.7rem; opacity: 0.8;">TEMPO (MIN)</div>
+                    <input type="number" id="customMinutes" value="20" min="1" max="120" onchange="changeTimerDuration()" class="time-input">
+                </div>
+                <div>
+                    <div style="font-size: 0.7rem; opacity: 0.8;">CRONÔMETRO</div>
+                    <div class="timer-display" id="timer">20:00</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <button class="btn-green btn-sm" onclick="startTimer()">▶ Iniciar</button>
+                    <button class="btn-orange btn-sm" onclick="pauseTimer()">⏸ Pausar</button>
+                    <button class="btn-red btn-sm" onclick="resetTimer()">↺ Reset</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="grid">
+        <!-- COLUNA ESQUERDA: CADASTRO, BACKUP, DESEMPATES E CALCULADORA -->
+        <div class="no-print">
+            <div class="card">
+                <h2>1. Participantes e Configuração</h2>
+                <div class="input-group">
+                    <input type="text" id="playerName" placeholder="Nome do aluno (Ex: João - 7ºA)" onkeypress="if(event.key==='Enter') addPlayer()">
+                    <button class="btn-blue" onclick="addPlayer()">Adicionar</button>
+                </div>
+                <div class="config-row">
+                    <label for="maxRounds"><strong>Nº de Rodadas (1ª Fase):</strong></label>
+                    <input type="number" id="maxRounds" value="4" min="2" max="10" style="width: 70px;">
+                </div>
+                <ul class="player-list" id="playerList"></ul>
+                <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                    <button class="btn-green" id="btnStart" onclick="startTournament()">🎲 Sortear 1ª Rodada</button>
+                    <button class="btn-blue" id="btnNextRound" onclick="generateNextSwissRound()" style="display: none;">⚔️ Parear Próxima Rodada</button>
+                    <button class="btn-purple" id="btnSemifinals" onclick="generateSemifinals()" style="display: none;">🏆 Gerar Semifinais (Top 4)</button>
+                    <button class="btn-purple" id="btnFinals" onclick="confirmAndGenerateFinals()" style="display: none;">🥇 Gerar Final e Disputa de 3º</button>
+                    <button class="btn-green" id="btnConfirmPodium" onclick="confirmPodium()" style="display: none;">🏅 Confirmar Pódio Oficial</button>
+                    
+                    <div style="display: flex; gap: 6px; margin-top: 4px;">
+                        <button class="btn-dark btn-sm" style="flex: 1;" onclick="exportBackup()" title="Baixar arquivo de segurança">💾 Salvar Backup</button>
+                        <button class="btn-dark btn-sm" style="flex: 1;" onclick="document.getElementById('backupFile').click()" title="Carregar arquivo salvo">📂 Restaurar</button>
+                        <input type="file" id="backupFile" accept=".json" style="display: none;" onchange="importBackup(event)">
+                    </div>
+                    <button class="btn-red btn-sm" onclick="resetAll()">🗑️ Reiniciar Torneio</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>⚡ Partidas Extras de Desempate</h2>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 0;">Use apenas se persistir empate após Pontos, Confronto Direto, Buchholz e Vitórias. O vencedor sobe na tabela.</p>
+                <button class="btn-orange" style="width: 100%; margin-bottom: 10px;" onclick="openTiebreakModal()">+ Nova Partida de Desempate</button>
+                <div id="tiebreaksList"></div>
+            </div>
+
+            <div class="card">
+                <h2>⚖️ Contagem de Peças (Fim do Tempo)</h2>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 0;">Se estourar o tempo sem xeque-mate, conte o material restante:</p>
+                <div class="calc-grid">
+                    <div>
+                        <strong>Brancas</strong>
+                        <div class="calc-row"><span>Dama (9)</span><input type="number" min="0" max="9" value="0" id="wQ" onchange="calcPieces()"></div>
+                        <div class="calc-row"><span>Torre (5)</span><input type="number" min="0" max="10" value="0" id="wR" onchange="calcPieces()"></div>
+                        <div class="calc-row"><span>Bispo (3)</span><input type="number" min="0" max="10" value="0" id="wB" onchange="calcPieces()"></div>
+                        <div class="calc-row"><span>Cavalo (3)</span><input type="number" min="0" max="10" value="0" id="wN" onchange="calcPieces()"></div>
+                        <div class="calc-row"><span>Peão (1)</span><input type="number" min="0" max="8" value="0" id="wP" onchange="calcPieces()"></div>
+                        <div class="calc-result" id="wTotal">0 pts</div>
+                    </div>
+                    <div>
+                        <strong>Pretas</strong>
+                        <div class="calc-row"><span>Dama (9)</span><input type="number" min="0" max="9" value="0" id="bQ" onchange="calcPieces()"></div>
+                        <div class="calc-row"><span>Torre (5)</span><input type="number" min="0" max="10" value="0" id="bR" onchange="calcPieces()"></div>
+                        <div class="calc-row"><span>Bispo (3)</span><input type="number" min="0" max="10" value="0" id="bB" onchange="calcPieces()"></div>
+                        <div class="calc-row"><span>Cavalo (3)</span><input type="number" min="0" max="10" value="0" id="bN" onchange="calcPieces()"></div>
+                        <div class="calc-row"><span>Peão (1)</span><input type="number" min="0" max="8" value="0" id="bP" onchange="calcPieces()"></div>
+                        <div class="calc-result" id="bTotal">0 pts</div>
+                    </div>
+                </div>
+                <button class="btn-orange btn-sm" style="width: 100%; margin-top: 10px;" onclick="resetCalc()">Zerar Calculadora</button>
+            </div>
+        </div>
+
+        <!-- COLUNA DIREITA: CLASSIFICAÇÃO, PÓDIO E CONFRONTOS -->
+        <div>
+            <div id="podiumBanner" class="podium-card" style="display: none;"></div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <h2 style="border: none; margin: 0; padding: 0;">🏆 Classificação Geral (1ª Fase)</h2>
+                    <button class="btn-dark btn-sm no-print" onclick="window.print()">🖨️ Exportar / Imprimir Relatório</button>
+                </div>
+                <div class="legend-bar">
+                    <span class="legend-dot"></span> Zona de Classificação para Semifinais (Top 4: 1ºx4º e 2ºx3º) • Desempate: Pts → Confronto Direto → Buchholz → Vitórias
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Aluno</th>
+                                <th>Pts</th>
+                                <th title="Buchholz: Soma dos pontos dos adversários enfrentados">Buch.</th>
+                                <th>V</th>
+                                <th>J</th>
+                                <th>Cores</th>
+                            </tr>
+                        </thead>
+                        <tbody id="standingsBody">
+                            <tr><td colspan="7" style="text-align: center; color: #888;">Adicione alunos e sorteie a 1ª rodada</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 2px solid var(--bg); padding-bottom: 10px; margin-bottom: 15px;">
+                    <h2 style="border: none; margin: 0; padding: 0;">⚔️ Confrontos e Mesas</h2>
+                    <div class="pagination-controls no-print" id="paginationControls" style="display: none;">
+                        <button class="btn-blue btn-sm" id="btnPrevPage" onclick="changePage(-1)">◀ Anterior</button>
+                        <span id="pageIndicator" style="font-weight: bold; font-size: 0.9rem;">Rodada 1</span>
+                        <button class="btn-blue btn-sm" id="btnNextPage" onclick="changePage(1)">Próxima ▶</button>
+                    </div>
+                </div>
+                <div id="roundsContainer">
+                    <p style="color: #888; text-align: center;">Os confrontos aparecerão aqui.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE DESEMPATE -->
+<div id="tiebreakModal" class="modal no-print" style="display: none;">
+    <div class="modal-content">
+        <h3>⚡ Registrar Partida de Desempate</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div>
+                <label for="tbTitle"><strong>Descrição do confronto:</strong></label>
+                <input type="text" id="tbTitle" style="width: 100%; margin-top: 5px;">
+            </div>
+            <div>
+                <label for="tbPlayer1"><strong>Jogador 1 (Brancas):</strong></label>
+                <select id="tbPlayer1" style="width: 100%; margin-top: 5px;"></select>
+            </div>
+            <div>
+                <label for="tbPlayer2"><strong>Jogador 2 (Pretas):</strong></label>
+                <select id="tbPlayer2" style="width: 100%; margin-top: 5px;"></select>
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 5px;">
+                <button type="button" class="btn-red" onclick="closeTiebreakModal()">Cancelar</button>
+                <button type="button" class="btn-green" onclick="createTiebreakMatch()">Criar Partida</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODO TELÃO -->
+<div id="projectorOverlay" class="projector-overlay no-print" style="display: none;">
+    <div class="projector-header">
+        <h2>♟️ INTERCLASSES DE XADREZ</h2>
+        <div id="projectorStatus" class="status-badge">Aguardando Início</div>
+        <div id="projTimer" class="projector-timer">20:00</div>
+        <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-green" onclick="startTimer()">▶ Iniciar</button>
+            <button type="button" class="btn-orange" onclick="pauseTimer()">⏸ Pausar</button>
+            <button type="button" class="btn-red" onclick="closeProjectorMode()">✖ Sair do Telão</button>
+        </div>
+    </div>
+    <h3 id="projRoundTitle" style="margin: 0 0 15px 0;">Aguardando Sorteio da 1ª Rodada</h3>
+    <div id="projectorMatchesGrid" class="projector-grid"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
