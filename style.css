@@ -115,6 +115,22 @@ tr.top4-row td:first-child { border-left: 4px solid #27ae60; font-weight: bold; 
 .proj-table-num { background: #f1c40f; color: #1a252f; font-weight: bold; font-size: 1.1rem; padding: 4px 12px; border-radius: 6px; display: inline-block; margin-bottom: 12px; }
 .proj-player-row { font-size: 1.45rem; margin: 10px 0; display: flex; align-items: center; gap: 12px; }
 .proj-piece { padding: 4px 10px; border-radius: 6px; font-size: 1rem; font-weight: bold; width: 90px; text-align: center; }
+.proj-final-layout { width: 100%; display: grid; grid-template-columns: minmax(320px, 0.8fr) minmax(600px, 1.2fr); gap: 20px; align-items: start; }
+.proj-podium { background: #2c3e50; border: 2px solid #34495e; border-radius: 12px; padding: 20px; text-align: center; }
+.proj-podium h2,
+.proj-final-table h2 { margin: 0 0 15px; color: #f1c40f; }
+.proj-podium-grid { display: flex; align-items: flex-end; justify-content: center; gap: 16px; flex-wrap: wrap; }
+.proj-podium-place { min-width: 220px; padding: 14px 18px; border-radius: 10px; background: rgba(255,255,255,0.12); border: 2px solid #95a5a6; font-size: 1.25rem; }
+.proj-podium-place strong { display: block; margin-top: 8px; font-size: 1.55rem; }
+.proj-first { order: 2; min-height: 145px; border-color: #f1c40f; background: rgba(241,196,15,0.18); }
+.proj-second { order: 1; min-height: 125px; }
+.proj-third { order: 3; min-height: 115px; border-color: #cd7f32; }
+.proj-final-table { background: #2c3e50; border: 2px solid #34495e; border-radius: 12px; padding: 16px 20px; overflow-x: auto; }
+.proj-final-table table { width: 100%; margin: 0; color: white; font-size: 1.05rem; }
+.proj-final-table th { background: #34495e; color: #f1c40f; }
+.proj-final-table th,
+.proj-final-table td { border-bottom-color: #4a5f73; padding: 7px 10px; }
+.proj-final-table tr.proj-qualified-row td { background: rgba(39,174,96,0.22); }
 
 @media (max-width: 860px) {
     body { padding: 10px; }
@@ -129,6 +145,9 @@ tr.top4-row td:first-child { border-left: 4px solid #27ae60; font-weight: bold; 
     .projector-header { align-items: flex-start; }
     .projector-timer { font-size: 3rem; }
     .projector-grid { grid-template-columns: 1fr; }
+    .proj-final-layout { grid-template-columns: 1fr; }
+    .proj-podium-place { min-width: 150px; }
+    .proj-final-table table { font-size: 0.9rem; }
 }
 
 /* MODO IMPRESSÃO / PDF */

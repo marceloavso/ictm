@@ -98,15 +98,74 @@ function closeProjectorMode() {
 function renderProjectorContent() {
     const grid = document.getElementById('projectorMatchesGrid');
     const titleEl = document.getElementById('projRoundTitle');
+    const projectorStatus = document.getElementById('projectorStatus');
 
     if (rounds.length === 0) {
         titleEl.innerText = 'Aguardando Sorteio da 1ª Rodada';
+        projectorStatus.innerText = 'Aguardando Início';
         grid.innerHTML = '<div style="font-size: 1.5rem; opacity: 0.7;">Os confrontos e mesas aparecerão aqui assim que o torneio iniciar.</div>';
         return;
     }
 
+    if (podiumConfirmed) {
+        const podium = getOfficialPodium();
+        if (podium) {
+            titleEl.innerText = '🏁 Torneio Finalizado';
+            projectorStatus.innerText = '🏁 Torneio Finalizado!';
+            const standings = getPlayerStats();
+            const podiumHtml = `
+                <section class="proj-podium">
+                    <h2>🏆 Pódio Oficial</h2>
+                    <div class="proj-podium-grid">
+                        <div class="proj-podium-place proj-second">
+                            <div>🥈 2º Lugar</div>
+                            <strong>${podium.runnerUp}</strong>
+                        </div>
+                        <div class="proj-podium-place proj-first">
+                            <div>🥇 1º Lugar</div>
+                            <strong>${podium.champion}</strong>
+                        </div>
+                        <div class="proj-podium-place proj-third">
+                            <div>🥉 3º Lugar</div>
+                            <strong>${podium.thirdPlace}</strong>
+                        </div>
+                    </div>
+                </section>`;
+            const standingsHtml = standings.map((s, idx) => {
+                const colorChips = s.colorHistory.map(c =>
+                    `<span class="color-chip chip-${c}" title="${c === 'W' ? 'Brancas' : 'Pretas'}">${c === 'W' ? 'B' : 'P'}</span>`
+                ).join('') || '-';
+                return `
+                <tr${idx < 4 ? ' class="proj-qualified-row"' : ''}>
+                    <td>${idx + 1}º</td>
+                    <td><strong>${s.name}</strong></td>
+                    <td>${s.pts}</td>
+                    <td>${s.buchholz}</td>
+                    <td>${s.wins}</td>
+                    <td>${s.played}</td>
+                    <td>${colorChips}</td>
+                </tr>`;
+            }).join('');
+            grid.innerHTML = `
+                <div class="proj-final-layout">
+                    ${podiumHtml}
+                    <section class="proj-final-table">
+                        <h2>🏆 Classificação Geral Completa</h2>
+                        <table>
+                            <thead>
+                                <tr><th>Pos</th><th>Jogador</th><th>Pts</th><th>Buch.</th><th>V</th><th>J</th><th>Cores</th></tr>
+                            </thead>
+                            <tbody>${standingsHtml}</tbody>
+                        </table>
+                    </section>
+                </div>`;
+            return;
+        }
+    }
+
     const activeRound = rounds[currentPage];
     titleEl.innerText = activeRound.title;
+    projectorStatus.innerText = 'Acompanhe o torneio';
     grid.innerHTML = '';
 
     let tableNum = 1;
@@ -814,33 +873,41 @@ html += '</div>';
 container.innerHTML += html;
 });
 }
+function getOfficialPodium() {
+    const finalRound = rounds.find(r => r.stage === 'final');
+    if (!finalRound || !podiumConfirmed || finalRound.matches.some(m => !m.result)) {
+        return null;
+    }
+    const fMatch = finalRound.matches[0];
+    const tMatch = finalRound.matches[1];
+    return {
+        champion: fMatch.result === 'W' ? fMatch.white.name : fMatch.black.name,
+        runnerUp: fMatch.result === 'W' ? fMatch.black.name : fMatch.white.name,
+        thirdPlace: tMatch.result === 'W' ? tMatch.white.name : tMatch.black.name
+    };
+}
 function renderPodium() {
 const banner = document.getElementById('podiumBanner');
-const finalRound = rounds.find(r => r.stage === 'final');
-if (!finalRound || !podiumConfirmed || finalRound.matches.some(m => !m.result)) {
+const podium = getOfficialPodium();
+if (!podium) {
 banner.style.display = 'none';
 return;
 }
-const fMatch = finalRound.matches[0];
-const tMatch = finalRound.matches[1];
-const champion = fMatch.result === 'W' ? fMatch.white.name : fMatch.black.name;
-const runnerUp = fMatch.result === 'W' ? fMatch.black.name : fMatch.white.name;
-const thirdPlace = tMatch.result === 'W' ? tMatch.white.name : tMatch.black.name;
 banner.style.display = 'block';
 banner.innerHTML = `
 <h2 style="margin: 0; color: #f1c40f;">🏆 Pódio Oficial do Interclasses</h2>
 <div class="podium-grid">
     <div class="podium-place" style="border: 2px solid #f1c40f;">
         <div style="font-size: 1.5rem;">🥇 1º Lugar</div>
-        <strong>${champion}</strong>
+        <strong>${podium.champion}</strong>
     </div>
     <div class="podium-place">
         <div style="font-size: 1.5rem;">🥈 2º Lugar</div>
-        <strong>${runnerUp}</strong>
+        <strong>${podium.runnerUp}</strong>
     </div>
     <div class="podium-place">
         <div style="font-size: 1.5rem;">🥉 3º Lugar</div>
-        <strong>${thirdPlace}</strong>
+        <strong>${podium.thirdPlace}</strong>
     </div>
 </div>`;
 }
