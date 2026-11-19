@@ -742,7 +742,7 @@ let colorChips = s.colorHistory.map(c =>
 ).join('');
 if (!colorChips) colorChips = '-';
 tbody.innerHTML += `
-<tr>
+<tr class="${rowClass}">
     <td>${idx + 1}º</td>
     <td><strong>${s.name}</strong>${top4Badge ? ` <span class="top4-badge">${top4Badge}</span>` : ''} ${tbBadge}</td>
     <td>${s.pts}</td>
